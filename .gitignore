@@ -1,11 +1,33 @@
-# Virtual Environments
+# Virtual Environments & Python
 ml_env/
 venv/
-.env
+ENV/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
 
-# Flutter/Dart
+# Environment Variables & Sensitive Configs
+.env
+.env.*
+!.env.example
+*.env
+*.key
+*.pem
+*.p12
+
+# Firebase Credentials & Local Configs (Option A)
+**/android/app/google-services.json
+!**/android/app/google-services.json.example
+**/lib/firebase_options.dart
+!**/lib/firebase_options.dart.example
+**/GoogleService-Info.plist
+!**/GoogleService-Info.plist.example
+firebase.json
+
+# Flutter & Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -14,12 +36,20 @@ __pycache__/
 build/
 **/*.iml
 .idea/
+.vscode/
 
-# OS generated files
+# Android Keystores & Local Properties
+**/android/local.properties
+**/android/key.properties
+**/android/**/*.keystore
+**/android/**/*.jks
+**/android/.gradle/
+
+# OS Generated Files
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Machine Learning
+# Machine Learning / Personal Activity Data
 ML/activity_log.csv
-# Uncomment the line below if you want to ignore large dataset files
 # ML/fyp_runner_dataset.csv

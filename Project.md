@@ -1,39 +1,42 @@
-# AI-Powered Running Race Time Predictor - MVP Documentation
+# Elite Pace: AI-Powered Running Race Time Predictor - Project Documentation
 
 ## Project Overview
-This project is a mobile application prototype designed for runners to predict their race completion times (5K, 10K, Half Marathon, or Full Marathon) based on their recent training data. The goal is to provide a simple, data-driven tool to help athletes set realistic race goals.
+Elite Pace is a comprehensive, production-ready mobile application designed for runners to accurately predict race completion times for 5K, 10K, Half Marathon, and Full Marathon distances. By leveraging advanced machine learning and physiological data, it provides athletes with data-driven goals and a personalized AI Running Coach to optimize their training.
 
-## Core Objectives (MVP Phase)
-The current stage focuses strictly on the "Core Loop": **User Authentication -> Data Input -> ML Inference -> Result Display**.
+## Core Features
+The application delivers a professional-grade experience with the following core modules:
 
-### 1. User Authentication
-- Implement secure Login and Registration using **Firebase Authentication**.
-- Ensure users can manage their sessions (Email/Password).
+### 1. Secure User Ecosystem
+- **Firebase Authentication:** Enterprise-grade secure login and registration.
+- **Dynamic User Profiles:** Cloud-synced management of personal metrics (Age, Gender) and training history using **Firestore**.
 
-### 2. Prediction Engine
-- Capture four primary metrics:
-  - **Distance** (Recent long run or session distance).
-  - **Average Pace** (min/km).
-  - **Weekly Mileage** (Total volume).
-  - **Heart Rate** (Average during training).
-- Communicate with a **Python (FastAPI/Flask)** backend hosting a pre-trained ML model.
+### 2. High-Precision Prediction Engine
+- **XGBoost Inference:** A sophisticated machine learning model trained on diverse runner datasets, evaluating:
+  - **Physiological Metrics:** Resting HR, Max HR, and VO2 Max.
+  - **Training Dynamics:** Weekly mileage, training consistency, and pace zones (Easy vs. Tempo).
+  - **Historical Performance:** Personal bests (PBs) across multiple distances for baseline calibration.
+- **Automated Data Enrichment:** Intelligent backend logic that utilizes sports science proxies to maintain prediction accuracy even when optional user data is missing.
 
-### 3. User Interface
-- **Screen 1 (Auth):** Minimalist login/signup forms.
-- **Screen 2 (Input):** A validated form for training metrics.
-- **Screen 3 (Result):** High-visibility display of predicted race times returned by the API.
+### 3. Elite AI Running Coach
+- **Generative AI Integration:** Powered by **Google Gemini**, providing interactive, context-aware training advice.
+- **Personalized Insights:** The coach analyzes the user's specific predictions and training volume to offer tailored strategy, injury prevention tips, and motivational support.
+
+### 4. Advanced Performance Analytics
+- **Data Visualization:** High-impact interactive charts (via `fl_chart`) that track performance trends and training consistency over time.
 
 ## Tech Stack
-- **Frontend:** Flutter (Dart) - Material Design.
-- **Backend:** Python (FastAPI/Flask) - Model serving.
-- **ML Framework:** Scikit-learn / XGBoost.
-- **Database & Identity:** Firebase (Firestore & Auth).
+- **Frontend:** Flutter (Dart) - Material 3 Design System.
+- **Backend:** Python (FastAPI) - Robust API for model serving and AI orchestration.
+- **AI/ML:** XGBoost, Scikit-learn, Pandas.
+- **LLM:** Google Gemini 1.5 Flash.
+- **Infrastructure:** Firebase (Authentication, Cloud Firestore).
 
-## Current Roadmap
-1. **[Phase 1] Backend Bridge:** Setup Python API to load `.joblib`/`.h5` models and handle POST requests.
-2. **[Phase 2] Firebase Setup:** Connect Flutter app to Firebase projects.
-3. **[Phase 3] Flutter Core:** Implement Auth logic and the Input Form.
-4. **[Phase 4] Integration:** Connect Flutter to the Backend API and verify end-to-end flow.
+## Project Roadmap
+- [x] **[Phase 1] Backend Architecture:** FastAPI implementation with optimized XGBoost model serving.
+- [x] **[Phase 2] Cloud Integration:** Full Firebase suite setup for identity and real-time data sync.
+- [x] **[Phase 3] Mobile Experience:** Implementation of the Material 3 UI, multi-step forms, and navigation.
+- [x] **[Phase 4] Intelligence Layer:** Integration of the Gemini-powered Elite AI Coach.
+- [x] **[Phase 5] Optimization & Delivery:** Final UI/UX polish, integration testing, and performance tuning.
 
 ---
-*Note: This is a prototype for the Final Year Project (FYP). Complexity like dashboards, chatbots, or XAI are out of scope for the current MVP.*
+*Developed as a Final Year Project (FYP) - Final Release.*

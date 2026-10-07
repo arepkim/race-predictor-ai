@@ -3,9 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'prediction_screen.dart';
 import 'history_screen.dart';
+import 'profile_screen.dart';
+import 'coach_screen.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final Function(int)? onTabSwitch;
+  const HomePage({super.key, this.onTabSwitch});
 
   // Fetch the user's first name from Firestore
   Future<String> _getUserFirstName() async {
@@ -19,19 +22,10 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Race Predictor', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.blue),
-            onPressed: () => FirebaseAuth.instance.signOut(),
-          )
-        ],
+        title: const Text('Race Predictor'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -43,46 +37,82 @@ class HomePage extends StatelessWidget {
               future: _getUserFirstName(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Text('Loading...', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.grey));
+                  return Text('Loading...', style: theme.textTheme.headlineMedium?.copyWith(color: Colors.grey));
                 }
                 return Text(
                   'Hello, ${snapshot.data}!',
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: theme.textTheme.headlineLarge,
                 );
               },
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               "What would you like to do today?",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
 
             // --- The Navigation Cards ---
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 1, // Stacks them vertically. Change to 2 for side-by-side squares!
-                childAspectRatio: 2.0,
-                mainAxisSpacing: 20,
+              child: ListView(
                 children: [
                   _buildNavCard(
                     context,
                     title: 'Predict Race Time',
                     subtitle: 'Use AI to forecast your next finish line.',
                     icon: Icons.timer,
-                    color: Colors.blue.shade600,
+                    color: theme.colorScheme.primary,
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const PredictionScreen()));
+                      if (onTabSwitch != null) {
+                        onTabSwitch!(1); // Index of PredictionScreen
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const PredictionScreen()));
+                      }
                     },
                   ),
+                  const SizedBox(height: 16),
+                  _buildNavCard(
+                    context,
+                    title: 'Elite AI Coach',
+                    subtitle: 'Chat with your AI coach for training advice.',
+                    icon: Icons.chat_bubble,
+                    color: Colors.orange.shade700,
+                    onTap: () {
+                      if (onTabSwitch != null) {
+                        onTabSwitch!(2); // Index of CoachScreen
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const CoachScreen()));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   _buildNavCard(
                     context,
                     title: 'View Analytics',
                     subtitle: 'Check your pacing trends and past predictions.',
                     icon: Icons.auto_graph,
-                    color: Colors.black87,
+                    color: theme.colorScheme.secondary,
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const HistoryScreen()));
+                      if (onTabSwitch != null) {
+                        onTabSwitch!(3); // Index of HistoryScreen
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const HistoryScreen()));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildNavCard(
+                    context,
+                    title: 'My Profile',
+                    subtitle: 'Manage your account and physical metrics.',
+                    icon: Icons.person,
+                    color: theme.colorScheme.tertiary,
+                    onTap: () {
+                      if (onTabSwitch != null) {
+                        onTabSwitch!(4); // Index of ProfileScreen
+                      } else {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                      }
                     },
                   ),
                 ],

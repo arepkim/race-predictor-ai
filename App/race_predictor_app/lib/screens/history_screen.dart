@@ -41,12 +41,9 @@ class HistoryScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black, // Matching Garmin's dark mode vibe
       appBar: AppBar(
-        title: const Text('Race Predictor', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
+        title: const Text('Race History'),
+        automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -56,19 +53,26 @@ class HistoryScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.blue));
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text("Error loading history", style: TextStyle(color: Colors.red.shade300)));
+            return const Center(child: Text("Error loading history", style: TextStyle(color: Colors.red)));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text(
-                "No predictions yet.\nGo run some miles!",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.history, size: 64, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "No predictions yet.\nGo run some miles!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
               ),
             );
           }
@@ -87,18 +91,26 @@ class HistoryScreen extends StatelessWidget {
           double minX = double.maxFinite;
           double maxX = -double.maxFinite;
 
+          int sessionIndex = -1;
+          DateTime? lastDate;
+
           for (var doc in chartDocs) {
             final data = doc.data() as Map<String, dynamic>;
             if (data['timestamp'] == null) continue;
             
             final date = (data['timestamp'] as Timestamp).toDate();
-            // Convert date to a double for the X-axis (days since epoch)
-            final x = date.millisecondsSinceEpoch / (1000 * 60 * 60 * 24);
+            
+            if (lastDate == null || date.difference(lastDate).inSeconds.abs() > 5) {
+              sessionIndex++;
+              lastDate = date;
+            }
+
+            final x = sessionIndex.toDouble();
             
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
 
-            final distance = data['target_distance_km'] as double;
+            final distance = (data['target_distance_km'] as num).toDouble();
             final timeStr = data['predicted_time'] as String;
             final pace = _calculatePace(timeStr, distance);
 
@@ -116,90 +128,97 @@ class HistoryScreen extends StatelessWidget {
             maxX += 1;
           }
 
+          final theme = Theme.of(context);
+
           return CustomScrollView(
             slivers: [
-              // --- DASHBOARD SECTION (GARMIN STYLE) ---
+              // --- DASHBOARD SECTION ---
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Pace Trend', 
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // THE LINE CHART
-                      SizedBox(
-                        height: 250,
-                        child: LineChart(
-                          LineChartData(
-                            gridData: FlGridData(
-                              show: true,
-                              drawVerticalLine: false,
-                              horizontalInterval: 1.0,
-                              getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade800, strokeWidth: 1),
-                            ),
-                            titlesData: FlTitlesData(
-                              show: true,
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)), // Hide bottom dates to match your screenshot
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 45,
-                                  getTitlesWidget: (value, meta) {
-                                    return Text(
-                                      _formatPace(value), 
-                                      style: const TextStyle(color: Colors.grey, fontSize: 12)
-                                    );
-                                  },
+                  padding: const EdgeInsets.all(20.0),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Pace Trend', 
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
+                          ),
+                          const SizedBox(height: 30),
+                          
+                          // THE LINE CHART
+                          SizedBox(
+                            height: 250,
+                            child: LineChart(
+                              LineChartData(
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  horizontalInterval: 1.0,
+                                  getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1),
                                 ),
+                                titlesData: FlTitlesData(
+                                  show: true,
+                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)), 
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 45,
+                                      getTitlesWidget: (value, meta) {
+                                        return Text(
+                                          _formatPace(value), 
+                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12)
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                borderData: FlBorderData(show: false),
+                                minX: minX,
+                                maxX: maxX,
+                                lineBarsData: [
+                                  _buildLineChartBarData(spots5k, Colors.blue),
+                                  _buildLineChartBarData(spots10k, Colors.green),
+                                  _buildLineChartBarData(spotsHalf, Colors.orange),
+                                  _buildLineChartBarData(spotsFull, Colors.red),
+                                ],
                               ),
                             ),
-                            borderData: FlBorderData(show: false),
-                            minX: minX,
-                            maxX: maxX,
-                            lineBarsData: [
-                              _buildLineChartBarData(spots5k, Colors.blue.shade400),
-                              _buildLineChartBarData(spots10k, Colors.green.shade400),
-                              _buildLineChartBarData(spotsHalf, Colors.orange.shade400),
-                              _buildLineChartBarData(spotsFull, Colors.red.shade400),
-                            ],
                           ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // CUSTOM LEGEND
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildLegendItem(Colors.blue.shade400, '5k'),
-                          const SizedBox(width: 16),
-                          _buildLegendItem(Colors.green.shade400, '10k', isTriangle: true),
-                          const SizedBox(width: 16),
-                          _buildLegendItem(Colors.orange.shade400, 'Half', isSquare: true),
-                          const SizedBox(width: 16),
-                          _buildLegendItem(Colors.red.shade400, 'Marathon', isDiamond: true),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // CUSTOM LEGEND
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildLegendItem(Colors.blue, '5k'),
+                              const SizedBox(width: 16),
+                              _buildLegendItem(Colors.green, '10k'),
+                              const SizedBox(width: 16),
+                              _buildLegendItem(Colors.orange, 'Half'),
+                              const SizedBox(width: 16),
+                              _buildLegendItem(Colors.red, 'Full'),
+                            ],
+                          )
                         ],
-                      )
-                    ],
+                      ),
+                    ),
                   ),
                 ),
               ),
 
               // --- HISTORY LIST TITLE ---
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                   child: Text(
                     'Prediction Log', 
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)
                   ),
                 ),
               ),
@@ -210,40 +229,44 @@ class HistoryScreen extends StatelessWidget {
                   (context, index) {
                     final data = docs[index].data() as Map<String, dynamic>;
                     
-                    final distance = data['target_distance_km'];
+                    final distance = (data['target_distance_km'] as num).toDouble();
                     final time = data['predicted_time'] ?? '--:--:--';
                     final pace = _formatPace(_calculatePace(time, distance));
                     
                     String dateString = "Just now";
                     if (data['timestamp'] != null) {
                       DateTime date = (data['timestamp'] as Timestamp).toDate();
-                      dateString = DateFormat('MMM d • h:mm a').format(date); 
+                      dateString = DateFormat('MMM d, yyyy').format(date); 
                     }
 
                     // Determine color based on distance
                     Color iconColor = Colors.grey;
-                    if (distance == 5.0) iconColor = Colors.blue.shade400;
-                    else if (distance == 10.0) iconColor = Colors.green.shade400;
-                    else if (distance == 21.1) iconColor = Colors.orange.shade400;
-                    else if (distance == 42.2) iconColor = Colors.red.shade400;
+                    if (distance == 5.0) iconColor = Colors.blue;
+                    else if (distance == 10.0) iconColor = Colors.green;
+                    else if (distance == 21.1) iconColor = Colors.orange;
+                    else if (distance == 42.2) iconColor = Colors.red;
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
                       child: Card(
-                        color: Colors.grey.shade900,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          leading: Icon(Icons.circle, color: iconColor, size: 16),
+                          leading: Container(
+                            width: 8,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: iconColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
                           title: Text(
                             "${distance}k Prediction", 
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)
+                            style: theme.textTheme.titleMedium,
                           ),
-                          subtitle: Text("Time: $time  •  Pace: $pace", style: TextStyle(color: Colors.grey.shade400)),
+                          subtitle: Text("Time: $time  •  Pace: $pace", style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
                           trailing: Text(
                             dateString, 
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12)
+                            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade400),
                           ),
                         ),
                       ),
@@ -252,6 +275,7 @@ class HistoryScreen extends StatelessWidget {
                   childCount: docs.length,
                 ),
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           );
         },
@@ -263,7 +287,7 @@ class HistoryScreen extends StatelessWidget {
   LineChartBarData _buildLineChartBarData(List<FlSpot> spots, Color color) {
     return LineChartBarData(
       spots: spots,
-      isCurved: true, // Smooth curves like the Garmin chart
+      isCurved: false, // Smooth curves like the Garmin chart
       color: color,
       barWidth: 3,
       isStrokeCapRound: true,
